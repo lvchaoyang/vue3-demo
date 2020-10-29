@@ -1,37 +1,69 @@
 <!--
   @Author: lvcy
   @Date: 2020/10/28/ 22:43:10
-  @Description:
+  @Description: ColumnList
 -->
 <template>
   <div class="column-list">
-    <ul>
-      <li v-for="column in list" :key="column.id">
-        <img :src="column.avatar" :alt="column.title" />
-        <h5>{{ column.title }}</h5>
-        <p>{{ column.description }}</p>
-        <a href="#">进入专栏</a>
-      </li>
-    </ul>
+    <div class="row">
+      <div v-for="column in columnList" :key="column.id" class="col-4 mb-4">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body text-center">
+            <img
+              :src="column.avatar"
+              :alt="column.title"
+              class="rounded-circle border border-light my-3"
+            />
+            <h5 class="card-title">{{ column.title }}</h5>
+            <p class="card-text text-left">{{ column.description }}</p>
+            <router-link :to="`/column/${column.id}`" class="btn btn-outline-primary">进入专栏</router-link>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue'
-export interface ColumnProps {
+import { computed, defineComponent, PropType, reactive, toRefs } from "vue";
+export interface ColumnProp {
   id: number;
   title: string;
-  avatar: string;
+  avatar?: string;
   description: string;
 }
 export default defineComponent({
-  name: 'ColumnList',
+  name: "ColumnList",
   props: {
     list: {
       required: true,
-      type: Array as PropType<ColumnProps[]>
+      type: Array as PropType<ColumnProp[]>,
+    },
+  },
+  setup(props) {
+    const data = reactive({
+      columnList: computed(() => {
+        return props.list.map((column) => {
+          if (!column.avatar) {
+            column.avatar = require("@/assets/column.jpg");
+          }
+          return column;
+        });
+      }),
+    });
+    return {
+      ...toRefs(data),
+    };
+  },
+});
+</script>
+<style lang="less">
+.column-list {
+  .card-body {
+    img {
+      width: 50px;
+      height: 50px;
     }
   }
-})
-</script>
-<style lang="less"></style>
+}
+</style>
