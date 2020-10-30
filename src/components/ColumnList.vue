@@ -26,18 +26,13 @@
 
 <script lang="ts">
 import { computed, defineComponent, PropType, reactive, toRefs } from "vue";
-export interface ColumnProp {
-  id: number;
-  title: string;
-  avatar?: string;
-  description: string;
-}
+import { ColumnProps } from "@/testData";
 export default defineComponent({
   name: "ColumnList",
   props: {
     list: {
       required: true,
-      type: Array as PropType<ColumnProp[]>,
+      type: Array as PropType<ColumnProps[]>,
     },
   },
   setup(props) {
