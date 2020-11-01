@@ -34,6 +34,7 @@ import ValidateForm from "@/components/ValidateForm.vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 import { GlobalDataProps } from "@/store";
+import createMessage from "../components/createMessage";
 export default defineComponent({
   name: "login-page",
   components: {
@@ -54,8 +55,21 @@ export default defineComponent({
     const passwordRef = ref("");
     const onFormSubmit = (result: boolean) => {
       if (result) {
-        router.push({ path: "/home" });
-        store.commit("login");
+        const payload = {
+          email: emailRef.value,
+          password: passwordRef.value,
+        };
+        store
+          .dispatch("loginAndFetch", payload)
+          .then(() => {
+            createMessage("登录成功，3秒后跳转首页", "success");
+            setTimeout(() => {
+              router.push({ path: "/home" });
+            }, 3000);
+          })
+          .catch((e) => {
+            console.log("Login Page Catch Error:" + e);
+          });
       }
     };
     return {

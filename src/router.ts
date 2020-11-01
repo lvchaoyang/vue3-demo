@@ -38,14 +38,34 @@ const router = createRouter({
 
 
 router.beforeEach((to, from, next) => {
-    const { user } = store.state
+    const { user, token } = store.state
     const { requiredLogin, redirectAlreadyLogin } = to.meta;
-    if (requiredLogin && !user.isLogin) {
-        next('login')
-    } else if (redirectAlreadyLogin && user.isLogin) {
-        next('/')
-    } else {
-        next()
+    if (!user.isLogin) { // 用户未登录完成
+        if (token) { // 获取了token但是还未获取用户信息
+            store.dispatch('fetchCurrentUser').then(() => {
+              if (redirectAlreadyLogin) { // 登录页
+                next('/')
+              } else {
+                next()
+              }
+            }).catch(e => { // 获取用户信息异常
+              console.error(e)
+              store.commit('logout')
+              next('login')
+            })
+        } else { // 没有token
+            if (requiredLogin) {
+                next('login')
+            } else {
+                next()
+            }
+        }
+    } else { // 用户登录完成
+        if (redirectAlreadyLogin) { // 登录页的化跳转首页
+            next('/')
+        } else {
+            next()
+        }
     }
 })
 
