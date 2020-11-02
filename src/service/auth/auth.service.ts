@@ -26,4 +26,18 @@ export default class AuthService {
         })
         return res;
     }
+    static async signup(payload: UserSignupProps) {
+        const res = await axios({
+            url: '/users',
+            method: 'post',
+            data: payload
+        })
+        return res;
+    }
+}
+
+interface UserSignupProps {
+    email: string;
+    nickName: string;
+    password: string;
 }

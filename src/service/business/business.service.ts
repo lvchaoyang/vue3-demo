@@ -1,4 +1,5 @@
 import axios from '@/service/base/axios';
+import { PostProps } from '../../store';
 
 export default class BusinessService {
     /**
@@ -30,6 +31,34 @@ export default class BusinessService {
         const res = await axios({
             method: 'get',
             url: `/columns/${cid}/posts`,
+        })
+        return res;
+    }
+    /**
+     * 上传图片
+     * @param url 
+     * @param form 
+     */
+    static async upload(url: string, form: FormData) {
+        const res = await axios({
+            method: 'post',
+            url: url,
+            data: form,
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+        return res;
+    }
+    /**
+     * 创建文章
+     * @param params 
+     */
+    static async createPost(params: PostProps) {
+        const res = await axios({
+            method: 'post',
+            url: '/posts',
+            data: params
         })
         return res;
     }

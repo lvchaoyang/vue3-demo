@@ -1,6 +1,11 @@
 import { createStore} from 'vuex'
 import BusinessService from '@/service/business/business.service';
 import AuthService from '@/service/auth/auth.service';
+export interface ResponseType<T = {}> {
+    code: number;
+    message: string;
+    data: T;
+}
 export interface UserProps {
     isLogin: boolean;
     nickName?: string;
@@ -9,10 +14,11 @@ export interface UserProps {
     email?: string;
     description?: string;
   }
-interface ImageProps {
+export interface ImageProps {
     _id?: string;
     url?: string;
     createdAt?: string;
+    fitUrl?: string;
 }
 export interface ColumnProps {
     _id: string;
@@ -21,13 +27,15 @@ export interface ColumnProps {
     description: string;
 }
 export interface PostProps {
-    _id: string;
+    _id?: string;
     title: string;
     excerpt?: string; // 摘要
-    content: string;
-    image?: ImageProps;
-    createdAt: string;
+    content?: string;
+    image?: ImageProps | string;
+    createdAt?: string;
     column: string;
+    author?: string | UserProps;
+    isHTML?: boolean;
 }
 export interface GolbalErrorProps {
     status: boolean;
@@ -107,8 +115,9 @@ const store = createStore<GlobalDataProps>({
          * @param state 
          * @param newPost 
          */
-        createPost(state, newPost) {
-            state.posts.push(newPost);
+        createPost(state, rawData) {
+            console.log(rawData);
+            state.posts.push(rawData.data);
         },
         setLoading(state, status) {
             state.loading = status;
@@ -168,7 +177,15 @@ const store = createStore<GlobalDataProps>({
             const res = await BusinessService.fetchPosts(cid);
             commit('fetchPosts', res.data)
         },
-       
+        /**
+         * 创建文章
+         * @param param0 
+         * @param payload 
+         */
+        async createPost({ commit }, payload) {
+            const res = await BusinessService.createPost(payload);
+            commit('createPost', res.data)
+        }
         
     },
     getters: {

@@ -32,7 +32,13 @@ const router = createRouter({
             name: 'column-detail-page',
             component: () => import('@/views/column-datail-page.vue'),
             meta: { requiredLogin: true }
-        }
+        },
+        {
+            path: '/signup',
+            name: 'signup',
+            component: () => import('@/views/signup-page.vue'),
+            meta: { redirectAlreadyLogin: true }
+        },
     ]
 })
 
