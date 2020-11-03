@@ -38,7 +38,7 @@ export default defineComponent({
     const posts = computed(() => {
       return props.list.map((post) => {
         generateFitUrl(post.image as ImageProps, 200, 110, ["m_fill"]);
-        return post;
+        return { ...post, image: post.image as ImageProps };
       });
     });
     return {

@@ -34,6 +34,11 @@ const router = createRouter({
             meta: { requiredLogin: true }
         },
         {
+            path: '/posts/:id',
+            name: 'post-detail-page',
+            component: () => import('@/views/post-detail-page.vue'),
+          },
+        {
             path: '/signup',
             name: 'signup',
             component: () => import('@/views/signup-page.vue'),

@@ -12,6 +12,7 @@ export interface UserProps {
     _id?: string;
     column?: string;
     email?: string;
+    avatar?: ImageProps;
     description?: string;
   }
 export interface ImageProps {
@@ -110,14 +111,37 @@ const store = createStore<GlobalDataProps>({
         fetchPosts(state, rawData) {
             state.posts = rawData.data.list;
         },
+        fetchPost(state, rawData) {
+            state.posts.push(rawData.data);
+        },
         /**
          * 创建文章
          * @param state 
          * @param newPost 
          */
         createPost(state, rawData) {
-            console.log(rawData);
             state.posts.push(rawData.data);
+        },
+        /**
+         * 更新文章
+         * @param state 
+         * @param rawData 
+         */
+        updatePost(state, rawData) {
+            state.posts = state.posts.map(item => {
+                if (item._id === rawData.data._id) {
+                    item = rawData;
+                }
+                return item;
+            })
+        },
+        /**
+         * 删除文章
+         * @param state 
+         * @param rawData 
+         */
+        deletePost(state, rawData) {
+            state.posts = state.posts.filter(item => item._id !== rawData.data._id)
         },
         setLoading(state, status) {
             state.loading = status;
@@ -178,15 +202,38 @@ const store = createStore<GlobalDataProps>({
             commit('fetchPosts', res.data)
         },
         /**
+         * 获取文章详情
+         * @param param0 
+         * @param id 
+         */
+        async fetchPost({ state, commit }, id) {
+            const currentPost = state.posts[id]
+            if (!currentPost || !currentPost.content) {
+              const res = await BusinessService.fetchPost(id);
+              commit('fetchPost', res.data);
+              return res.data;
+            } else {
+              return Promise.resolve({ data: currentPost })
+            }
+          },
+        /**
          * 创建文章
          * @param param0 
          * @param payload 
          */
         async createPost({ commit }, payload) {
             const res = await BusinessService.createPost(payload);
-            commit('createPost', res.data)
+            commit('createPost', res.data);
+        },
+        async updatePost({ commit }, { id, payload }) {
+            const res = await BusinessService.updatePost(id, payload);
+            commit('createPost', res.data);
+          },
+        async deletePost({commit}, id) {
+            const res = await BusinessService.deletePost(id);
+            commit('deletePost', res.data);
+            return res.data;
         }
-        
     },
     getters: {
         getColumnById: (state) => (id: string) => {
@@ -194,7 +241,10 @@ const store = createStore<GlobalDataProps>({
         },
         getPostsByCid: (state) => (cid: string) => {
             return state.posts.filter(post => post.column === cid)
-        }
+        },
+        getCurrentPost: (state) => (id: string) => {
+            return state.posts.find(item => item._id === id)
+          }
     }
 })
 export default store

@@ -62,4 +62,35 @@ export default class BusinessService {
         })
         return res;
     }
+    /**
+     * 更新文章详情
+     * @param id 
+     * @param params 
+     */
+    static async updatePost(id: string, params: PostProps) {
+        const res = await axios({
+            method: 'patch',
+            url: `/posts/${id}`,
+            data: params
+        })
+        return res;
+    }
+    /**
+     * 获取文章详情
+     * @param id 
+     */
+    static async fetchPost(id: string) {
+        const res = await axios({
+            method: 'get',
+            url: `/posts/${id}`,
+        })
+        return res;
+    }
+    static async deletePost(id: string) {
+        const res = await axios({
+            method: 'delete',
+            url: `/posts/${id}`,
+        })
+        return res;
+    }
 }
