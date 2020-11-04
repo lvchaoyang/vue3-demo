@@ -40,3 +40,18 @@ export function beforeUploadCheck(file: File, condition: CheckCondition) {
     error
   }
 }
+
+/**
+ * 数组转对象
+ * @param arr 
+ */
+export function arrToObj <T extends {_id: string}>(arr: Array<T>) {
+  return arr.reduce((prev, current) => {
+    prev[current._id] = current;
+    return prev;
+  }, {} as {[key: string]: T})
+}
+
+export function objToArr <T>(obj: {[key: string]: T}) {
+  return Object.keys(obj).map(key => obj[key])
+}

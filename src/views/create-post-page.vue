@@ -110,6 +110,7 @@ export default defineComponent({
         const { column, _id } = store.state.user;
         if (column) {
           const newPost: PostProps = {
+            _id: "",
             title: titleVal.value,
             content: contentVal.value,
             column: column,

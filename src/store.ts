@@ -1,6 +1,7 @@
 import { createStore} from 'vuex'
 import BusinessService from '@/service/business/business.service';
 import AuthService from '@/service/auth/auth.service';
+import { arrToObj, objToArr } from './helper';
 export interface ResponseType<T = {}> {
     code: number;
     message: string;
@@ -28,7 +29,7 @@ export interface ColumnProps {
     description: string;
 }
 export interface PostProps {
-    _id?: string;
+    _id: string;
     title: string;
     excerpt?: string; // 摘要
     content?: string;
@@ -42,12 +43,15 @@ export interface GolbalErrorProps {
     status: boolean;
     message?: string;
 }
+interface ListProps<P> {
+    [id: string]: P;
+}
 export interface GlobalDataProps {
     error: GolbalErrorProps;
     token: string;
     loading: boolean;
-    columns: ColumnProps[];
-    posts: PostProps[];
+    columns: { data: ListProps<ColumnProps>; isLoaded: boolean } ;
+    posts: { data: ListProps<PostProps>; loadedColumns: string[] };
     user: UserProps;
 }
 const store = createStore<GlobalDataProps>({
@@ -55,8 +59,8 @@ const store = createStore<GlobalDataProps>({
         token: localStorage.getItem('token') || '',
         error: { status: false },
         loading: false,
-        columns: [],
-        posts: [],
+        columns: { data: {}, isLoaded: false},
+        posts: { data: {}, loadedColumns: []},
         user: { isLogin: false }
     },
     mutations: {
@@ -93,7 +97,8 @@ const store = createStore<GlobalDataProps>({
          * @param rawData 
          */
         fetchColumns(state, rawData) {
-            state.columns = rawData.data.list;
+            state.columns.data = arrToObj(rawData.data.list);
+            state.columns.isLoaded = true;
         },
         /**
          * 获取专栏详情
@@ -101,39 +106,35 @@ const store = createStore<GlobalDataProps>({
          * @param rawData 
          */
         fetchColumn(state, rawData) {
-            state.columns = [rawData.data];
+            state.columns.data[rawData.data._id] = rawData.data;
         },
         /**
          * 获取当前专栏文章列表
          * @param state 
          * @param rawData 
          */
-        fetchPosts(state, rawData) {
-            state.posts = rawData.data.list;
+        fetchPosts(state, {data: rawData, columnId}) {
+            state.posts.data = { ...state.posts.data, ...arrToObj(rawData.data.list) };
+            state.posts.loadedColumns.push(columnId);
         },
         fetchPost(state, rawData) {
-            state.posts.push(rawData.data);
+            state.posts.data[rawData.data._id] = rawData.data;
         },
         /**
          * 创建文章
          * @param state 
          * @param newPost 
          */
-        createPost(state, rawData) {
-            state.posts.push(rawData.data);
+        createPost(state, newPost) {
+            state.posts.data[newPost._id] = newPost;
         },
         /**
          * 更新文章
          * @param state 
          * @param rawData 
          */
-        updatePost(state, rawData) {
-            state.posts = state.posts.map(item => {
-                if (item._id === rawData.data._id) {
-                    item = rawData;
-                }
-                return item;
-            })
+        updatePost(state, { data }) {
+            state.posts.data[data._id] = data
         },
         /**
          * 删除文章
@@ -141,7 +142,7 @@ const store = createStore<GlobalDataProps>({
          * @param rawData 
          */
         deletePost(state, rawData) {
-            state.posts = state.posts.filter(item => item._id !== rawData.data._id)
+            delete state.posts.data[rawData.data._id];
         },
         setLoading(state, status) {
             state.loading = status;
@@ -180,26 +181,32 @@ const store = createStore<GlobalDataProps>({
          * 首页专栏列表
          * @param param0 
          */
-        async fetchColumns({ commit }) {
-            const res = await BusinessService.fetchColumns()
-            commit('fetchColumns', res.data);
+        async fetchColumns({ state, commit }) {
+            if (!state.columns.isLoaded) {
+                const res = await BusinessService.fetchColumns()
+                commit('fetchColumns', res.data);
+            }
         },
         /**
          * 专栏详情
          * @param param0 
          */
-        async fetchColumn({ commit }, cid) {
-            const res = await BusinessService.fetchColumn(cid);
-            commit('fetchColumn', res.data)
+        async fetchColumn({ state, commit }, cid) {
+            if (!state.columns.data[cid]) {
+                const res = await BusinessService.fetchColumn(cid);
+                commit('fetchColumn', res.data)
+            }
         },
         /**
          * 专栏文章列表
          * @param param0 
          * @param cid 
          */
-        async fetchPosts({ commit }, cid) {
-            const res = await BusinessService.fetchPosts(cid);
-            commit('fetchPosts', res.data)
+        async fetchPosts({ state, commit }, cid) {
+            if (!state.posts.loadedColumns.includes(cid)) {
+                const res = await BusinessService.fetchPosts(cid);
+                commit('fetchPosts', { data: res.data, columnId: cid });
+            }
         },
         /**
          * 获取文章详情
@@ -207,7 +214,7 @@ const store = createStore<GlobalDataProps>({
          * @param id 
          */
         async fetchPost({ state, commit }, id) {
-            const currentPost = state.posts[id]
+            const currentPost = state.posts.data[id]
             if (!currentPost || !currentPost.content) {
               const res = await BusinessService.fetchPost(id);
               commit('fetchPost', res.data);
@@ -236,14 +243,17 @@ const store = createStore<GlobalDataProps>({
         }
     },
     getters: {
+        getColumns: (state) => {
+            return objToArr(state.columns.data);
+        },
         getColumnById: (state) => (id: string) => {
-            return state.columns.find(item => item._id === id)
+            return state.columns.data[id]
         },
         getPostsByCid: (state) => (cid: string) => {
-            return state.posts.filter(post => post.column === cid)
+            return objToArr(state.posts.data).filter(post => post.column === cid)
         },
         getCurrentPost: (state) => (id: string) => {
-            return state.posts.find(item => item._id === id)
+            return state.posts.data[id];
           }
     }
 })
